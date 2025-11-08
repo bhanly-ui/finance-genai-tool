@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Finance GenAI Use Case Prioritisation Tool | Brightbeam</title>
+  <meta name="description" content="Evaluate and prioritise Finance GenAI transformation initiatives with this interactive tool from Brightbeam.">
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @media print {
+      * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+      }
+      
+      body { 
+        background: white !important;
+        margin: 0;
+        padding: 0;
+      }
+      
+      .no-print { 
+        display: none !important; 
+      }
+      
+      .print-only {
+        display: block !important;
+      }
+      
+      .print-break-avoid {
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+      }
+      
+      .bg-gradient-to-br {
+        background: white !important;
+      }
+      
+      .shadow-lg {
+        box-shadow: none !important;
+      }
+      
+      @page {
+        margin: 1.5cm;
+        size: A4 portrait;
+      }
+      
+      table {
+        page-break-inside: auto;
+        width: 100%;
+      }
+      
+      tr {
+        page-break-inside: avoid;
+        page-break-after: auto;
+      }
+      
+      thead {
+        display: table-header-group;
+      }
+      
+      .print-title {
+        display: block !important;
+        font-size: 24px;
+        font-weight: bold;
+        margin-bottom: 10px;
+        color: #1e3a8a;
+      }
+      
+      .print-section {
+        margin-bottom: 30px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useMemo } = React;
+
+    const useCases = [
+      {
+        id: 11,
+        name: "Spend Forecasting (OpEx & R&D)",
+        process: "Planning & Forecasting / Record-to-Report",
+        objective: "Improve accuracy and agility of OpEx and R&D forecasts with richer scenario planning",
+        challenges: [
+          "Manual, spreadsheet-driven models with inconsistent assumptions",
+          "Limited time and tooling for scenario analysis",
+          "Weak linkage between financial forecasts and underlying operational drivers"
+        ],
+        theme: "From static budgeting to continuous, scenario-led planning",
+        kpis: ["Planning cycle time", "Forecast accuracy", "Quality of scenario analysis", "Stakeholder alignment"],
+        steps: [
+          { role: "FP&A / AI Engine", activity: "Collect historical spend and drivers", aiIntervention: "Auto-describe data quality issues; harmonise spend categories" },
+          { role: "Business Owners / FP&A", activity: "Define forecasting assumptions and scenarios", aiIntervention: "Convert narrative inputs into structured drivers; propose additional scenarios" },
+          { role: "AI Engine / FP&A", activity: "Generate baseline forecasts", aiIntervention: "Combine time-series forecasting with driver-based rules; explain forecast shape" },
+          { role: "Business Owners / FP&A", activity: "Review and challenge forecasts", aiIntervention: "Highlight significant variances; generate draft explanations" },
+          { role: "FP&A / Business", activity: "Scenario comparison and decision support", aiIntervention: "Create narrative comparisons; summarise trade-offs and risks" },
+          { role: "FP&A / ERP", activity: "Publish plan to ERP", aiIntervention: "Validate mapping; produce executive summary" }
+        ]
+      },
+      {
+        id: 12,
+        name: "Automated Financial Narratives",
+        process: "Record-to-Report / Management Reporting",
+        objective: "Automatically generate clear, consistent narratives explaining financial performance at different organisational levels",
+        challenges: [
+          "Manual writing of management commentary and slide content",
+          "Inconsistent messaging across sites, regions, and group",
+          "Slow turnaround on month- and quarter-end reports"
+        ],
+        theme: "From manual slide-writing to auto-generated, audience-specific financial storytelling",
+        kpis: ["Reporting cycle time", "Consistency of messaging", "Clarity of performance story", "Leadership engagement"],
+        steps: [
+          { role: "Corporate Finance / ERP", activity: "Assemble reporting datasets", aiIntervention: "Check completeness; flag missing or inconsistent data" },
+          { role: "AI Narrative Engine", activity: "Generate first-draft narratives", aiIntervention: "Generate draft commentary for each level; explain major movements" },
+          { role: "AI Engine / Finance", activity: "Tailor narratives by audience", aiIntervention: "Adapt messages for different stakeholders with appropriate detail and tone" },
+          { role: "Finance", activity: "Finance review and approval", aiIntervention: "Highlight inconsistencies vs prior period; suggest improvements" },
+          { role: "Corporate Finance", activity: "Publish to reporting channels", aiIntervention: "Automatically format narrative content for slides and dashboards" }
+        ]
+      },
+      {
+        id: 13,
+        name: "Expense Fraud & Non-Compliance",
+        process: "T&E Management / Procure-to-Pay / Compliance",
+        objective: "Detect fraud, waste, and policy breaches in expense and vendor claims at scale",
+        challenges: [
+          "High transaction volumes with limited audit capacity",
+          "Manual, sample-based checks",
+          "Inconsistent enforcement of T&E policies"
+        ],
+        theme: "From sample-based checks to continuous, intelligent controls on spend",
+        kpis: ["Policy adherence", "Fraud/waste detection", "Audit readiness", "Investigation throughput"],
+        steps: [
+          { role: "Employees / T&E System", activity: "Submit claims", aiIntervention: "Extract key details from receipts; normalise merchant names and categories" },
+          { role: "AI Engine", activity: "Automated policy screening", aiIntervention: "Interpret policy text; flag potential breaches" },
+          { role: "AI Engine", activity: "Anomaly and pattern detection", aiIntervention: "Identify unusual patterns; summarise suspected issues" },
+          { role: "AP Team / AI Engine", activity: "Reviewer workflow", aiIntervention: "Provide case summaries with relevant history" },
+          { role: "AP Team / AI Engine", activity: "Feedback loop and learning", aiIntervention: "Retrain models based on outcomes" }
+        ]
+      },
+      {
+        id: 14,
+        name: "Automated Invoice Processing",
+        process: "Procure-to-Pay",
+        objective: "Enable touchless processing of supplier invoices using AI-assisted data extraction, validation, and matching",
+        challenges: [
+          "Manual data entry and keying errors",
+          "High volume of exceptions due to mismatches and missing data",
+          "Delayed payments and frequent supplier queries"
+        ],
+        theme: "From manual invoice keying to touchless, exception-only P2P operations",
+        kpis: ["Straight-through processing rate", "Invoice cycle time", "Posting accuracy", "Supplier satisfaction"],
+        steps: [
+          { role: "Vendors / AP", activity: "Invoice receipt and ingestion", aiIntervention: "Extract details via document AI; detect duplicates" },
+          { role: "AI Engine / ERP", activity: "Data validation and enrichment", aiIntervention: "Cross-check against master data; suggest likely PO matches" },
+          { role: "AI Engine / ERP", activity: "Automated matching (2-/3-way)", aiIntervention: "Explain mismatches in plain language" },
+          { role: "AP Team / AI Engine", activity: "Exception handling", aiIntervention: "Propose root causes; draft clarification emails" },
+          { role: "AP Team / ERP", activity: "Approval and posting", aiIntervention: "Final validation; highlight unusual account combinations" }
+        ]
+      },
+      {
+        id: 15,
+        name: "Budget Variance Analysis",
+        process: "Planning & Performance Management / Record-to-Report",
+        objective: "Rapidly identify, understand, and act on unusual budget vs actual variances",
+        challenges: [
+          "Time-consuming manual analysis across multiple dimensions",
+          "Inconsistent or superficial variance explanations",
+          "Weak linkage from variance insight to corrective action"
+        ],
+        theme: "From backward-looking variance decks to insight- and action-led performance management",
+        kpis: ["Speed of variance analysis", "Depth of insight", "Link between insights and actions", "Quality of re-forecasting"],
+        steps: [
+          { role: "FP&A / ERP", activity: "Aggregate variance data", aiIntervention: "Validate completeness; flag anomalous records" },
+          { role: "AI Engine", activity: "Variance pattern detection", aiIntervention: "Cluster variances by common drivers" },
+          { role: "AI Engine / FP&A", activity: "Root cause analysis", aiIntervention: "Correlate with operational KPIs; generate draft narratives" },
+          { role: "Business / FP&A", activity: "Stakeholder review and challenge", aiIntervention: "Provide structured prompts and questions" },
+          { role: "Business / FP&A", activity: "Action and tracking", aiIntervention: "Summarise actions, owners, and expected impact" }
+        ]
+      },
+      {
+        id: 16,
+        name: "Cash Flow Forecasting",
+        process: "Treasury / Planning & Forecasting / O2C & P2P",
+        objective: "Predict short-, medium-, and long-term cash positions with higher confidence and improved visibility of liquidity risk",
+        challenges: [
+          "Fragmented inputs across AR, AP, payroll, capex, tax, and loans",
+          "Manual spreadsheet roll-ups",
+          "Limited ability to test scenarios or understand behavioural drivers of cash"
+        ],
+        theme: "From manual cash roll-ups to predictive, scenario-ready liquidity management",
+        kpis: ["Cash forecast reliability", "Visibility of liquidity risks", "Efficiency of treasury planning"],
+        steps: [
+          { role: "Treasury / ERP", activity: "Data consolidation", aiIntervention: "Reconcile discrepancies; classify cash flows by type" },
+          { role: "AI Engine", activity: "Behavioural modelling", aiIntervention: "Learn actual payment patterns and adjust timing" },
+          { role: "AI Engine / Treasury", activity: "Forecast generation", aiIntervention: "Combine models with scenarios; provide narrative commentary" },
+          { role: "Treasury / AI Engine", activity: "Variance monitoring", aiIntervention: "Explain deviations; update model parameters" },
+          { role: "Treasury / FP&A", activity: "Decision support", aiIntervention: "Generate liquidity risk and opportunity summaries" }
+        ]
+      },
+      {
+        id: 17,
+        name: "Automated Financial Close",
+        process: "Record-to-Report (month-end, quarter-end, year-end)",
+        objective: "Streamline close activities, reduce manual work, and improve financial control and transparency",
+        challenges: [
+          "Large volumes of close tasks and dependencies",
+          "Time-consuming reconciliations and late adjustments",
+          "Limited real-time visibility of close status and risks"
+        ],
+        theme: "From checklist-driven close to orchestrated, semi-autonomous close with built-in controls",
+        kpis: ["Close cycle time", "Number of late adjustments", "Reconciliation effort", "Audit trail quality"],
+        steps: [
+          { role: "Controllers / AI Engine", activity: "Close calendar and task orchestration", aiIntervention: "Recommend optimal sequencing; highlight high-risk items" },
+          { role: "Shared Services / AI", activity: "Automated reconciliations", aiIntervention: "Match transactions; propose adjustments with justification" },
+          { role: "Local Finance / AI", activity: "Journal entry review and posting", aiIntervention: "Check entries against patterns; flag unusual items" },
+          { role: "Controllers / AI Engine", activity: "Close status monitoring", aiIntervention: "Generate real-time dashboards and status reports" },
+          { role: "Finance / AI Engine", activity: "Management reporting package", aiIntervention: "Auto-generate standard close packs and commentary" }
+        ]
+      },
+      {
+        id: 18,
+        name: "Tax Compliance Optimisation",
+        process: "Tax / Statutory Reporting / Compliance",
+        objective: "Optimise tax positions while ensuring compliance across multiple jurisdictions",
+        challenges: [
+          "Complex, evolving regulations across countries",
+          "Manual interpretation of tax laws and guidance",
+          "Difficulties in maintaining consistent, audit-ready documentation"
+        ],
+        theme: "From reactive compliance to proactive, AI-assisted tax optimisation within safe bounds",
+        kpis: ["Compliance risk", "Time to interpret rules", "Documentation quality", "Audit readiness"],
+        steps: [
+          { role: "AI Engine / Tax Team", activity: "Tax rule ingestion and interpretation", aiIntervention: "Summarise key changes; map rules to transaction types" },
+          { role: "ERP / AI Engine", activity: "Transaction classification", aiIntervention: "Re-classify ambiguous items with explanations" },
+          { role: "Tax Team / AI Engine", activity: "Compliance checks and simulations", aiIntervention: "Highlight risks; compare alternative treatments" },
+          { role: "Tax Team / AI Engine", activity: "Return preparation and documentation", aiIntervention: "Draft supporting memos and audit-ready explanations" },
+          { role: "Tax Team / AI Engine", activity: "Ongoing monitoring", aiIntervention: "Alert on changes; propose review actions" }
+        ]
+      },
+      {
+        id: 19,
+        name: "Financial Risk Scoring",
+        process: "Enterprise Risk / O2C / Procurement / Capital Allocation",
+        objective: "Score and prioritise financial risk across projects, suppliers, customers, and business units using multi-source data and explainable AI",
+        challenges: [
+          "Fragmented internal and external data",
+          "Subjective, spreadsheet-based risk assessments",
+          "Limited early-warning capability for emerging risks"
+        ],
+        theme: "From subjective assessments to data-driven, explainable financial risk management",
+        kpis: ["Risk visibility", "Prioritisation of monitoring", "Speed of response", "Potential loss avoidance"],
+        steps: [
+          { role: "Risk & Finance", activity: "Data aggregation", aiIntervention: "Harmonise entity names; summarise external signals" },
+          { role: "AI Engine / Risk Team", activity: "Risk factor modelling", aiIntervention: "Propose factor sets; articulate scoring methodology" },
+          { role: "AI Engine", activity: "Entity-level risk scoring", aiIntervention: "Generate scores with natural-language explanations" },
+          { role: "Risk / Finance", activity: "Risk reporting and alerts", aiIntervention: "Draft risk summaries for governance forums" },
+          { role: "Risk Owners / AI", activity: "Action planning and monitoring", aiIntervention: "Suggest mitigation actions based on historical cases" }
+        ]
+      }
+    ];
+
+    const criteria = [
+      { id: 'impact', name: 'Business Impact/Value', description: 'How much value would this create? (e.g., cycle time reduction, accuracy improvement, cost savings, quality enhancement)' },
+      { id: 'urgency', name: 'Current Pain/Urgency', description: 'How badly is this needed right now? (e.g., error rates, processing delays, compliance risk, stakeholder pressure)' },
+      { id: 'feasibility', name: 'Implementation Feasibility', description: 'How easy would this be to implement? (e.g., data availability, technical complexity, resource requirements, change management)' },
+      { id: 'strategic', name: 'Strategic Fit', description: 'How well does this align with current priorities? (e.g., digital transformation goals, leadership support, organisational readiness)' }
+    ];
+
+    // Lucide React icons as inline SVG components
+    const ChevronDown = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>;
+    const ChevronUp = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>;
+    const Check = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>;
+    const FileDown = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><polyline points="9 15 12 18 15 15"></polyline></svg>;
+    const ArrowRight = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>;
+
+    function App() {
+      const [activeTab, setActiveTab] = useState('overview');
+      const [expandedUseCase, setExpandedUseCase] = useState(null);
+      const [scores, setScores] = useState({});
+      const [weights, setWeights] = useState({
+        impact: 25,
+        urgency: 25,
+        feasibility: 25,
+        strategic: 25
+      });
+      const [scoredUseCases, setScoredUseCases] = useState(new Set());
+
+      const handlePrintReport = () => {
+        setTimeout(() => {
+          window.print();
+        }, 100);
+      };
+
+      const handleScoreChange = (useCaseId, criterionId, value) => {
+        setScores(prev => ({
+          ...prev,
+          [useCaseId]: {
+            ...prev[useCaseId],
+            [criterionId]: parseInt(value)
+          }
+        }));
+        setScoredUseCases(prev => new Set([...prev, useCaseId]));
+      };
+
+      const handleWeightChange = (criterionId, value) => {
+        const numValue = parseInt(value);
+        const otherWeights = Object.entries(weights)
+          .filter(([id]) => id !== criterionId)
+          .reduce((sum, [, weight]) => sum + weight, 0);
+        
+        if (numValue + otherWeights <= 100) {
+          setWeights(prev => ({ ...prev, [criterionId]: numValue }));
+        }
+      };
+
+      const totalWeight = Object.values(weights).reduce((sum, w) => sum + w, 0);
+
+      const prioritisedUseCases = useMemo(() => {
+        return useCases.map(uc => {
+          const ucScores = scores[uc.id] || {};
+          const weightedScore = criteria.reduce((sum, criterion) => {
+            const score = ucScores[criterion.id] || 0;
+            const weight = weights[criterion.id] / 100;
+            return sum + (score * weight);
+          }, 0);
+
+          const avgImpact = ((ucScores.impact || 0) + (ucScores.urgency || 0)) / 2;
+          const avgEffort = (10 - (ucScores.feasibility || 0));
+
+          return {
+            ...uc,
+            weightedScore: weightedScore.toFixed(1),
+            avgImpact,
+            avgEffort,
+            isScored: scoredUseCases.has(uc.id)
+          };
+        })
+        .filter(uc => uc.isScored)
+        .sort((a, b) => b.weightedScore - a.weightedScore);
+      }, [scores, weights, scoredUseCases]);
+
+      const getQuadrant = (impact, effort) => {
+        if (impact >= 5 && effort <= 5) return 'Quick Wins';
+        if (impact >= 5 && effort > 5) return 'Strategic Initiatives';
+        if (impact < 5 && effort <= 5) return 'Fill-ins';
+        return 'Time Sinks';
+      };
+
+      return (
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4 md:p-8">
+          <div className="max-w-7xl mx-auto">
+            <header className="bg-white rounded-lg shadow-lg p-6 mb-6 no-print">
+              <div className="flex items-center justify-between mb-2">
+                <h1 className="text-3xl font-bold text-indigo-900">Finance GenAI Use Case Prioritisation Tool</h1>
+                <div className="text-right">
+                  <div className="text-sm text-gray-600">Powered by</div>
+                  <div className="text-2xl font-bold text-indigo-600">Brightbeam</div>
+                </div>
+              </div>
+              <p className="text-gray-600">Evaluate, prioritise, and plan your Finance AI transformation initiatives</p>
+            </header>
+
+            <div className="bg-white rounded-lg shadow-lg mb-6">
+              <div className="flex border-b overflow-x-auto no-print">
+                <button
+                  onClick={() => setActiveTab('overview')}
+                  className={`px-6 py-4 font-semibold whitespace-nowrap ${
+                    activeTab === 'overview'
+                      ? 'border-b-2 border-indigo-600 text-indigo-600'
+                      : 'text-gray-600 hover:text-indigo-600'
+                  }`}
+                >
+                  Overview
+                </button>
+                <button
+                  onClick={() => setActiveTab('evaluate')}
+                  className={`px-6 py-4 font-semibold whitespace-nowrap ${
+                    activeTab === 'evaluate'
+                      ? 'border-b-2 border-indigo-600 text-indigo-600'
+                      : 'text-gray-600 hover:text-indigo-600'
+                  }`}
+                >
+                  Evaluate & Score
+                </button>
+                <button
+                  onClick={() => setActiveTab('results')}
+                  className={`px-6 py-4 font-semibold whitespace-nowrap ${
+                    activeTab === 'results'
+                      ? 'border-b-2 border-indigo-600 text-indigo-600'
+                      : 'text-gray-600 hover:text-indigo-600'
+                  }`}
+                >
+                  Prioritisation Matrix
+                </button>
+              </div>
+
+              <div className="p-6">
+                {activeTab === 'overview' && (
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-800 mb-4">Finance GenAI Use Cases</h2>
+                    <p className="text-gray-600 mb-6">
+                      Explore 9 transformative use cases spanning core finance processes. Click on any use case to see detailed process flows.
+                    </p>
+
+                    <div className="grid gap-4">
+                      {useCases.map(uc => (
+                        <div key={uc.id} className="border border-gray-200 rounded-lg">
+                          <button
+                            onClick={() => setExpandedUseCase(expandedUseCase === uc.id ? null : uc.id)}
+                            className="w-full p-4 flex items-center justify-between hover:bg-gray-50 transition"
+                          >
+                            <div className="flex-1 text-left">
+                              <div className="flex items-center gap-3">
+                                <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 font-semibold text-sm">
+                                  {uc.id}
+                                </span>
+                                <h3 className="font-semibold text-gray-800">{uc.name}</h3>
+                              </div>
+                              <p className="text-sm text-gray-600 mt-2 ml-11">{uc.process}</p>
+                            </div>
+                            {expandedUseCase === uc.id ? <ChevronUp /> : <ChevronDown />}
+                          </button>
+
+                          {expandedUseCase === uc.id && (
+                            <div className="p-6 pt-0 border-t border-gray-100">
+                              <div className="space-y-4">
+                                <div>
+                                  <h4 className="font-semibold text-gray-700 mb-2">Objective</h4>
+                                  <p className="text-gray-600">{uc.objective}</p>
+                                </div>
+
+                                <div>
+                                  <h4 className="font-semibold text-gray-700 mb-2">Current Challenges</h4>
+                                  <ul className="list-disc list-inside space-y-1 text-gray-600">
+                                    {uc.challenges.map((challenge, idx) => (
+                                      <li key={idx}>{challenge}</li>
+                                    ))}
+                                  </ul>
+                                </div>
+
+                                <div>
+                                  <h4 className="font-semibold text-gray-700 mb-2">Transformation Theme</h4>
+                                  <p className="text-indigo-600 italic">{uc.theme}</p>
+                                </div>
+
+                                <div>
+                                  <h4 className="font-semibold text-gray-700 mb-2">Key KPIs Impacted</h4>
+                                  <div className="flex flex-wrap gap-2">
+                                    {uc.kpis.map((kpi, idx) => (
+                                      <span key={idx} className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm">
+                                        {kpi}
+                                      </span>
+                                    ))}
+                                  </div>
+                                </div>
+
+                                <div>
+                                  <h4 className="font-semibold text-gray-700 mb-3">Process Flow</h4>
+                                  <div className="space-y-3">
+                                    {uc.steps.map((step, idx) => (
+                                      <div key={idx} className="bg-gray-50 rounded-lg p-4">
+                                        <div className="flex items-start gap-3">
+                                          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center font-semibold text-sm">
+                                            {idx + 1}
+                                          </div>
+                                          <div className="flex-1">
+                                            <div className="flex items-center gap-2 mb-1">
+                                              <span className="text-xs font-semibold text-indigo-600 uppercase">{step.role}</span>
+                                            </div>
+                                            <p className="font-medium text-gray-800 mb-2">{step.activity}</p>
+                                            <div className="bg-blue-50 border-l-4 border-blue-400 p-3 rounded">
+                                              <p className="text-sm text-gray-700">
+                                                <span className="font-semibold text-blue-700">AI Intervention:</span> {step.aiIntervention}
+                                              </p>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {activeTab === 'evaluate' && (
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-800 mb-4">Evaluate & Score Use Cases</h2>
+                    <p className="text-gray-600 mb-6">
+                      Rate each use case on the criteria below (1-10 scale). You can also adjust the importance weighting of each criterion.
+                    </p>
+
+                    <div className="bg-indigo-50 rounded-lg p-6 mb-6">
+                      <h3 className="font-semibold text-gray-800 mb-4">Criterion Weights (Total: {totalWeight}%)</h3>
+                      <div className="grid md:grid-cols-2 gap-4">
+                        {criteria.map(criterion => (
+                          <div key={criterion.id}>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              {criterion.name}: {weights[criterion.id]}%
+                            </label>
+                            <input
+                              type="range"
+                              min="0"
+                              max="100"
+                              value={weights[criterion.id]}
+                              onChange={(e) => handleWeightChange(criterion.id, e.target.value)}
+                              className="w-full"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                      {totalWeight !== 100 && (
+                        <p className="text-amber-600 text-sm mt-2">⚠️ Weights should total 100%</p>
+                      )}
+                    </div>
+
+                    <div className="space-y-6">
+                      {useCases.map(uc => (
+                        <div key={uc.id} className="border border-gray-200 rounded-lg p-6 bg-white">
+                          <div className="flex items-center gap-3 mb-4">
+                            <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 font-semibold text-sm">
+                              {uc.id}
+                            </span>
+                            <div>
+                              <h3 className="font-semibold text-gray-800">{uc.name}</h3>
+                              <p className="text-sm text-gray-600">{uc.process}</p>
+                            </div>
+                            {scoredUseCases.has(uc.id) && (
+                              <Check className="ml-auto text-green-600" />
+                            )}
+                          </div>
+
+                          <div className="grid md:grid-cols-2 gap-4">
+                            {criteria.map(criterion => (
+                              <div key={criterion.id}>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                  {criterion.name}: {scores[uc.id]?.[criterion.id] || 0}/10
+                                </label>
+                                <input
+                                  type="range"
+                                  min="0"
+                                  max="10"
+                                  value={scores[uc.id]?.[criterion.id] || 0}
+                                  onChange={(e) => handleScoreChange(uc.id, criterion.id, e.target.value)}
+                                  className="w-full"
+                                />
+                                <p className="text-xs text-gray-500 mt-1">{criterion.description}</p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {activeTab === 'results' && (
+                  <div>
+                    <div className="print-only" style={{ display: 'none' }}>
+                      <h1 className="print-title">Finance GenAI Use Case Prioritisation Report</h1>
+                      <p style={{ marginBottom: '20px', color: '#6b7280' }}>
+                        Generated: {new Date().toLocaleDateString('en-GB', { 
+                          day: 'numeric', 
+                          month: 'long', 
+                          year: 'numeric' 
+                        })}
+                      </p>
+                      <p style={{ marginBottom: '30px', color: '#6b7280' }}>
+                        Powered by <strong>Brightbeam</strong> | www.brightbeam.ai
+                      </p>
+                    </div>
+                    
+                    <div className="flex items-center justify-between mb-4">
+                      <h2 className="text-2xl font-bold text-gray-800">Prioritisation Matrix</h2>
+                      {prioritisedUseCases.length > 0 && (
+                        <button
+                          onClick={handlePrintReport}
+                          className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition no-print"
+                        >
+                          <FileDown />
+                          Download PDF
+                        </button>
+                      )}
+                    </div>
+                    
+                    {prioritisedUseCases.length === 0 ? (
+                      <div className="text-center py-12">
+                        <p className="text-gray-600 mb-4">No use cases have been scored yet.</p>
+                        <button
+                          onClick={() => setActiveTab('evaluate')}
+                          className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
+                        >
+                          Go to Evaluation
+                        </button>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="bg-white rounded-lg border border-gray-200 mb-6 overflow-x-auto print-break-avoid print-section">
+                          <table className="w-full">
+                            <thead className="bg-gray-50">
+                              <tr>
+                                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Rank</th>
+                                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Use Case</th>
+                                <th className="px-4 py-3 text-center text-sm font-semibold text-gray-700">Score</th>
+                                <th className="px-4 py-3 text-center text-sm font-semibold text-gray-700">Impact</th>
+                                <th className="px-4 py-3 text-center text-sm font-semibold text-gray-700">Urgency</th>
+                                <th className="px-4 py-3 text-center text-sm font-semibold text-gray-700">Feasibility</th>
+                                <th className="px-4 py-3 text-center text-sm font-semibold text-gray-700">Strategic</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {prioritisedUseCases.map((uc, idx) => (
+                                <tr key={uc.id} className="border-t border-gray-200 hover:bg-gray-50">
+                                  <td className="px-4 py-3">
+                                    <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 font-semibold text-sm">
+                                      {idx + 1}
+                                    </span>
+                                  </td>
+                                  <td className="px-4 py-3">
+                                    <div className="font-medium text-gray-800">{uc.name}</div>
+                                    <div className="text-xs text-gray-600">{uc.process}</div>
+                                  </td>
+                                  <td className="px-4 py-3 text-center">
+                                    <span className="inline-block px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full font-semibold">
+                                      {uc.weightedScore}
+                                    </span>
+                                  </td>
+                                  <td className="px-4 py-3 text-center text-gray-700">{scores[uc.id]?.impact || 0}</td>
+                                  <td className="px-4 py-3 text-center text-gray-700">{scores[uc.id]?.urgency || 0}</td>
+                                  <td className="px-4 py-3 text-center text-gray-700">{scores[uc.id]?.feasibility || 0}</td>
+                                  <td className="px-4 py-3 text-center text-gray-700">{scores[uc.id]?.strategic || 0}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+
+                        <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6 print-break-avoid print-section">
+                          <h3 className="font-semibold text-gray-800 mb-4">Impact vs. Effort Matrix</h3>
+                          <div className="relative h-96 border-2 border-gray-300">
+                            <div className="absolute inset-0 grid grid-cols-2 grid-rows-2">
+                              <div className="border-r border-b border-gray-300 bg-yellow-50 p-2">
+                                <span className="text-xs font-semibold text-gray-600">Fill-ins</span>
+                              </div>
+                              <div className="border-b border-gray-300 bg-green-50 p-2">
+                                <span className="text-xs font-semibold text-gray-600">Quick Wins</span>
+                              </div>
+                              <div className="border-r border-gray-300 bg-red-50 p-2">
+                                <span className="text-xs font-semibold text-gray-600">Time Sinks</span>
+                              </div>
+                              <div className="bg-blue-50 p-2">
+                                <span className="text-xs font-semibold text-gray-600">Strategic</span>
+                              </div>
+                            </div>
+
+                            {prioritisedUseCases.map(uc => {
+                              const x = (uc.avgEffort / 10) * 100;
+                              const y = 100 - (uc.avgImpact / 10) * 100;
+                              return (
+                                <div
+                                  key={uc.id}
+                                  className="absolute w-10 h-10 -ml-5 -mt-5 rounded-full bg-indigo-600 text-white flex items-center justify-center text-xs font-semibold shadow-lg cursor-pointer hover:scale-110 transition"
+                                  style={{ left: `${x}%`, top: `${y}%` }}
+                                  title={uc.name}
+                                >
+                                  {uc.id}
+                                </div>
+                              );
+                            })}
+
+                            <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-sm font-medium text-gray-600">
+                              Effort (Lower = Easier) →
+                            </div>
+                            <div className="absolute -left-16 top-1/2 -translate-y-1/2 -rotate-90 text-sm font-medium text-gray-600">
+                              Impact (Higher = Better) →
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="bg-white rounded-lg border border-gray-200 p-6 print-break-avoid print-section">
+                          <h3 className="font-semibold text-gray-800 mb-4">Recommended Implementation Sequence</h3>
+                          
+                          <div className="space-y-6">
+                            {['Quick Wins', 'Strategic Initiatives', 'Fill-ins'].map(quadrant => {
+                              const quadrantCases = prioritisedUseCases.filter(uc => 
+                                getQuadrant(uc.avgImpact, uc.avgEffort) === quadrant
+                              );
+
+                              if (quadrantCases.length === 0) return null;
+
+                              return (
+                                <div key={quadrant}>
+                                  <h4 className="font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                                    <ArrowRight />
+                                    {quadrant}
+                                  </h4>
+                                  <div className="grid gap-3">
+                                    {quadrantCases.map(uc => (
+                                      <div key={uc.id} className="bg-gray-50 rounded-lg p-4 flex items-center justify-between">
+                                        <div>
+                                          <div className="font-medium text-gray-800">{uc.name}</div>
+                                          <div className="text-sm text-gray-600 mt-1">{uc.theme}</div>
+                                        </div>
+                                        <button
+                                          onClick={() => {
+                                            setExpandedUseCase(uc.id);
+                                            setActiveTab('overview');
+                                          }}
+                                          className="px-4 py-2 text-sm bg-indigo-600 text-white rounded hover:bg-indigo-700 transition no-print"
+                                        >
+                                          View Details
+                                        </button>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <footer className="text-center text-gray-600 text-sm no-print">
+              <p className="mb-2">Based on Finance GenAI Transformation Playbook</p>
+              <p>Powered by <a href="https://www.brightbeam.ai" target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:text-indigo-800 font-semibold">Brightbeam</a> | AI Solutions for Regulated Industries</p>
+            </footer>
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.render(<App />, document.getElementById('root'));
+  </script>
+</body>
+</html>
